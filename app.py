@@ -1,5 +1,5 @@
-from flask import Flask, request, render_template
-import hashlib, struct
+from flask import Flask, request
+import hashlib, struct, os
 
 app = Flask(__name__)
 
@@ -36,13 +36,26 @@ def custom_hash(plaintext: str, out_hex_len: int = 32) -> str:
 
 @app.route("/", methods=["GET", "POST"])
 def index():
-    hash_val = None
-    sha_val = None
+    html = """
+    <html>
+        <head><title>Custom Hash Generator</title></head>
+        <body style="font-family: Arial; padding:20px;">
+            <h2>Custom Hash vs SHA-256</h2>
+            <form method="post">
+                <input type="text" name="text" placeholder="Enter text" style="width:300px;">
+                <button type="submit">Generate Hash</button>
+            </form>
+    """
     if request.method == "POST":
         text = request.form.get("text", "")
         hash_val = custom_hash(text)
         sha_val = hashlib.sha256(text.encode()).hexdigest()
-    return render_template("index.html", custom_hash=hash_val, sha256=sha_val)
+        html += f"<p><b>Input:</b> {text}</p>"
+        html += f"<p><b>Custom Hash:</b> {hash_val}</p>"
+        html += f"<p><b>SHA-256:</b> {sha_val}</p>"
+    html += "</body></html>"
+    return html
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
